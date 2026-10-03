@@ -10,7 +10,7 @@ The training set contains image-label pairs $(x_i,\tilde y_i)$ with potentially 
 
 ### 2. Physical image checks
 
-Source defaults: file size at least **10,240 bytes**, shortest side at least **64 pixels**, PNG/GIF fraction of pixels with alpha greater than zero at least **0.05**. A file can also be rejected if PIL cannot decode it. Alpha checks sample at most 512 × 512 pixels. The original cleaner copies rejected files into a backup tree before removing originals; the portable version defaults to dry-run and requires `--apply` for removal.
+Source defaults: file size at least **10,240 bytes**, shortest side at least **64 pixels**, PNG/GIF fraction of pixels with alpha greater than zero at least **0.05**. A file can also be rejected if PIL cannot decode it. Alpha checks use a 512 × 512 sampling target; integer downsampling means this is not a strict pixel-count ceiling. The original cleaner copies rejected files into a backup tree before removing originals; the portable version defaults to dry-run and requires `--apply` for removal.
 
 These checks detect file/input problems. They do not establish whether a label is correct. Byte thresholds can exclude valid compressed images. The source comments mention different thresholds for the two datasets but do not provide a complete execution record.
 
@@ -74,7 +74,7 @@ No ground-truth labels accompany the archived CSVs. Precision, recall, F1, confu
 
 ### 2. 文件检查
 
-源码默认阈值：文件至少 **10,240 字节**，最短边至少 **64 像素**，PNG/GIF 中 alpha 大于零的像素占比至少 **0.05**。PIL 无法解码的图像也会被筛除。透明度检测最多采样 512 × 512 像素。原脚本先备份再移除；整理版默认仅预演，添加 `--apply` 后才执行。
+源码默认阈值：文件至少 **10,240 字节**，最短边至少 **64 像素**，PNG/GIF 中 alpha 大于零的像素占比至少 **0.05**。PIL 无法解码的图像也会被筛除。透明度检测的采样目标为 512 × 512 像素，整数降采样不能保证严格限制在此数量内。原脚本先备份再移除；整理版默认仅预演，添加 `--apply` 后才执行。
 
 这些规则检查输入可用性，不能判定标签是否正确；字节阈值可能筛掉正常的压缩图片。源码注释提到两个数据集使用过不同阈值，但没有完整运行记录。
 

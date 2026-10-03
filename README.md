@@ -91,7 +91,9 @@ These rules check input usability, not label correctness. The byte threshold can
 3. Strictly load the local `deit3_base_patch16_224.fb_in1k` checkpoint and remove its 1,000-class head. Run in evaluation mode without updating weights, obtaining one feature vector per image.
 4. L2-normalize each vector by dividing by its length, so subsequent comparisons use vector direction. Store float16 features by default; scoring converts them to float32 and normalizes them again.
 
-`features.npy` has shape **M × D**, where M is the number of readable images and D the embedding dimension; the default DeiT III Base has D = 768. Row i of `index.csv` identifies feature row i by path, class ID, and class name. Never reorder one file independently of the other. These vectors drive selection; the final classifier is trained on images.
+**Inside DeiT III Base.** Divide the 224 × 224 image into 16 × 16 patches, giving 14 × 14 = **196 patches**. Project each to 768 dimensions and add positional information. Prepend a learned CLS summary token, producing 197 tokens processed by **12 Transformer blocks**. Each block contains LayerNorm, 12-head self-attention, and a `768 → 3072 → 768` feed-forward network, with LayerScale and residual connections on both branches. Attention exchanges information across patches. The final normalized CLS token supplies the **768-dimensional image embedding**; the implementation does not simply average the 196 patch tokens. Sources: [timm 1.0.12 DeiT](https://github.com/huggingface/pytorch-image-models/blob/v1.0.12/timm/models/deit.py) and [Transformer implementation](https://github.com/huggingface/pytorch-image-models/blob/v1.0.12/timm/models/vision_transformer.py).
+
+`features.npy` has shape **M × D**, where M is the number of readable images and D the embedding dimension; D = 768 for the default model. Row i of `index.csv` identifies feature row i by path, class ID, and class name. Never reorder one file independently of the other. These vectors drive selection; the final classifier trains on **selected images**, without reading the cached vectors.
 
 ### 3. Consistency scoring: identify classwise outliers
 
@@ -131,7 +133,21 @@ Validation selects model weights. Because selection precedes splitting, it alrea
 
 **Initialize the classifier.** Strictly load the 1,000-class `convnext_base.fb_in1k` checkpoint, then replace its head with 400 or 5,000 outputs. Train the entire network. Its four stages have channels `[128, 256, 512, 1024]` and block counts `[3, 3, 27, 3]`. Global average pooling and normalization produce a 1,024-dimensional representation, followed by a linear head giving the class scores.
 
-![ConvNeXt-Base classifier architecture](docs/assets/architecture.png)
+![DeiT III feature extractor and ConvNeXt-Base classifier architecture](docs/assets/architecture.png)
+
+**How dimensions change.** B denotes batch size; tensors below use `B × channels × height × width`. Spatial dimensions decrease while channel counts grow:
+
+| Position | Operation | Output shape for a 320 × 320 input |
+|---|---|---|
+| Input | RGB image | B × 3 × 320 × 320 |
+| Stem | 4 × 4 convolution, stride 4; LayerNorm | B × 128 × 80 × 80 |
+| Stage 1 | 3 ConvNeXt blocks | B × 128 × 80 × 80 |
+| Stage 2 | LayerNorm + 2 × 2 stride-2 convolution; 3 blocks | B × 256 × 40 × 40 |
+| Stage 3 | Same downsampling pattern; 27 blocks | B × 512 × 20 × 20 |
+| Stage 4 | Same downsampling pattern; 3 blocks | B × 1024 × 10 × 10 |
+| Head | Global average pooling → LayerNorm → linear layer | B × 400 or B × 5000 |
+
+**Inside a ConvNeXt block.** `7 × 7 depthwise convolution → LayerNorm → linear expansion C→4C → GELU → linear projection 4C→C → LayerScale → DropPath → add input`. The depthwise convolution extracts spatial patterns independently per channel; the linear layers mix channels at each position. LayerScale applies learned scaling to the branch output, while the residual connection retains the input. Blocks preserve spatial size; downsampling occurs at stage entrances. This is **ConvNeXt V1 Base**, without V2's GRN module. Source: [timm 1.0.12 ConvNeXt implementation](https://github.com/huggingface/pytorch-image-models/blob/v1.0.12/timm/models/convnext.py).
 
 **Augmentation and loss.** Training and validation have different preprocessing; both use the ImageNet channel statistics from stage 2:
 
@@ -142,7 +158,9 @@ Validation selects model weights. Because selection precedes splitting, it alrea
 
 Each training batch uses Mixup or CutMix, with switching probability 0.5. Mixup blends two images and their labels; CutMix replaces a patch and combines labels according to the actual replaced area. The alpha values below control the sampling distribution of the mixing ratio. Soft-target cross entropy learns both classes in those proportions; label smoothing is zero. Validation uses unmixed images and original class labels for ordinary cross entropy and accuracy.
 
-**Optimization and model selection.** AdamW updates all parameters. The first three epochs linearly warm up from 20% of the base learning rate, followed by cosine decay to 0.000001. Drop path randomly skips residual branches during training. After each successful parameter update, maintain smoothed EMA weights: `new_EMA = 0.9999 × previous_EMA + 0.0001 × current_weights`.
+**One batch of training.** `Load and augment images → Mixup/CutMix → forward class scores → compute loss → backpropagate gradients → AdamW update → EMA update`. Per-image loss is `L = −Σ qₖ log softmax(logits)ₖ`, where qₖ is the mixed target proportion, averaged across the batch. Backpropagation updates both head and backbone. The training loader shuffles samples and drops the incomplete final batch. Decode failures are skipped; if they leave an odd Mixup batch, the portable version removes one more image to permit paired mixing. Logged processed counts can therefore be below the directory image count.
+
+**Optimization and model selection.** AdamW updates all parameters. The first three epochs linearly warm up from 20% of the base learning rate, followed by cosine decay to 0.000001. Configured drop path 0.4 is the maximum probability: it increases linearly from 0 to 0.4 across block depth and is disabled at evaluation. After each successful parameter update, maintain smoothed EMA weights: `new_EMA = 0.9999 × previous_EMA + 0.0001 × current_weights`.
 
 At each epoch's end, evaluate the EMA model across validation images. Accuracy is correct predictions divided by readable validation images; save `best.pth` whenever this exceeds the previous best. CUDA execution uses mixed precision, gradient scaling, and TF32. The portable version applies channels-last memory layout to both model and input.
 
@@ -154,7 +172,7 @@ At each epoch's end, evaluate the EMA model across validation images. Accuracy i
 | Mixup alpha / CutMix alpha | 0.2 / 0.2 | 0.4 / 1.0 |
 | AdamW learning rate / weight decay | 0.0005 / 0.05 | 0.0005 / 0.05 |
 | Warmup / minimum learning rate | 3 epochs / 0.000001 | 3 epochs / 0.000001 |
-| Drop path / EMA decay | 0.4 / 0.9999 | 0.4 / 0.9999 |
+| Maximum drop path / EMA decay | 0.4 / 0.9999 | 0.4 / 0.9999 |
 
 **Training artifacts.** The original scripts save best EMA weights and the class mapping. The portable version adds final weights and run records:
 

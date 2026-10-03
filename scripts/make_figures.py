@@ -21,7 +21,10 @@ BLUE, TEAL, GRAY = '#245bc5','#008575','#99aac1'
 def save(fig,name):
     OUT.mkdir(parents=True,exist_ok=True)
     fig.savefig(OUT/f'{name}.png',dpi=180,bbox_inches='tight')
-    fig.savefig(OUT/f'{name}.svg',bbox_inches='tight')
+    svg_path=OUT/f'{name}.svg'
+    fig.savefig(svg_path,bbox_inches='tight')
+    # Matplotlib emits spaces at line ends inside SVG paths; trim without changing geometry.
+    svg_path.write_text('\n'.join(line.rstrip() for line in svg_path.read_text(encoding='utf-8').splitlines())+'\n',encoding='utf-8')
     plt.close(fig)
 
 
@@ -117,15 +120,48 @@ def predictions():
 
 
 def architecture():
-    fig=plt.figure(figsize=(16,6.5));title(fig,'分类器结构 / Classifier architecture','ConvNeXt V1 Base · Backbone structure from the official implementation; project training crop is 320 × 320')
-    ax=fig.add_axes([.03,.12,.94,.69]);ax.axis('off');ax.set_xlim(0,1);ax.set_ylim(0,1)
+    fig=plt.figure(figsize=(13.2,13.5));title(fig,'双模型结构 / Two-model architecture',
+        'ImageNet-1K checkpoints · Structure verified against timm 1.0.12 · B = batch size; K = task classes')
+    ax=fig.add_axes([.04,.055,.92,.79]);ax.axis('off');ax.set_xlim(0,1);ax.set_ylim(0,1)
+    ax.text(.01,.99,'A  特征提取 / SELECTION FEATURES — DeiT III Base (frozen)',fontsize=15,weight='bold',color=BLUE,va='top')
+    labels=['输入 / Input','分块 / Patches','序列 / Tokens','Transformer','特征 / Feature']
+    bodies=['224 × 224 RGB\n16 × 16 patch size',
+            '14 × 14 = 196\nLinear projection\n196 × 768',
+            'Patch positions\nPrepend CLS token\n197 × 768',
+            '12 blocks\n12 heads per block\nMLP: 768→3072→768',
+            'LayerNorm → CLS\nB × 768 → L2 norm\nFor scoring only']
+    for i,(heading,body) in enumerate(zip(labels,bodies)):
+        x=.01+i*.202;box(ax,x,.76,.17,.19,heading,body)
+        if i<4:arrow(ax,(x+.178,.85),(x+.195,.85))
+    ax.text(.025,.709,'Transformer block: LN → self-attention → LayerScale + residual',fontsize=12,weight='bold',color=BLUE)
+    ax.text(.025,.675,'Then: LN → MLP (768→3072→768, GELU) → LayerScale + residual',fontsize=12,color=BLUE)
+    ax.text(.025,.632,'CLS summarizes the image. Cached vectors select images; they are not the classifier input.',fontsize=11,color='#526782')
+
+    ax.text(.01,.59,'B  图像分类 / CLASSIFICATION — ConvNeXt V1 Base (fine-tuned)',fontsize=15,weight='bold',color=TEAL,va='top')
+    ax.text(.01,.554,'Dimensions: H × W × C. The selected images enter this separate network.',fontsize=11,color='#526782')
     labels=['输入 / Input','Stage 1','Stage 2','Stage 3','Stage 4','输出 / Output']
-    bodies=['320 × 320 RGB\nStem: 4 × 4, stride 4', '3 blocks\nC = 128\n80 × 80', '3 blocks\nC = 256\n40 × 40', '27 blocks\nC = 512\n20 × 20', '3 blocks\nC = 1024\n10 × 10', 'GAP + LayerNorm\nLinear: 400 / 5,000\nOne model per task']
-    for i,(l,b) in enumerate(zip(labels,bodies)):
-        x=.015+i*.165;box(ax,x,.34,.13,.50,l,b,TEAL if i==5 else BLUE)
-        if i<5:arrow(ax,(x+.137,.59),(x+.157,.59))
-    ax.text(.02,.13,'ConvNeXt block: 7 × 7 depthwise conv → LayerNorm → C → 4C → GELU → 4C → C → residual',fontsize=13,weight='bold')
-    ax.text(.02,.03,'Pretrained identifier: convnext_base.fb_in1k. EMA chooses inference weights; horizontal-flip TTA reuses the same model.',fontsize=11,color='#526782')
+    bodies=['320 × 320 × 3\nStem: 4 × 4\nStride 4 + LN',
+            '3 blocks\n80 × 80 × 128', '3 blocks\n40 × 40 × 256',
+            '27 blocks\n20 × 20 × 512', '3 blocks\n10 × 10 × 1024',
+            'GAP → LN\nLinear → B × K\nK = 400 / 5,000']
+    for i,(heading,body) in enumerate(zip(labels,bodies)):
+        x=.01+i*.165;box(ax,x,.34,.14,.19,heading,body,TEAL)
+        if i<5:arrow(ax,(x+.148,.43),(x+.159,.43))
+    ax.text(.025,.307,'Stage 2–4 entrances: LayerNorm → 2 × 2 stride-2 convolution (halve H/W, double C).',fontsize=11,color=TEAL)
+
+    ax.text(.01,.272,'ConvNeXt 模块 / BLOCK — same spatial size; no V2 GRN',fontsize=14,weight='bold',color=TEAL)
+    block_labels=['7 × 7\nDepthwise conv','LayerNorm','Linear\nC → 4C','GELU','Linear\n4C → C','LayerScale\nDropPath\n+ input']
+    for i,label in enumerate(block_labels):
+        x=.025+i*.165
+        ax.add_patch(FancyBboxPatch((x,.075),.13,.115,boxstyle='round,pad=0.006,rounding_size=0.012',
+                                   linewidth=1.2,edgecolor=TEAL,facecolor='white'))
+        ax.text(x+.065,.1325,label,fontsize=11,ha='center',va='center',linespacing=1.5)
+        if i<5:arrow(ax,(x+.139,.1325),(x+.157,.1325))
+    ax.plot([.01,.01,.915],[.1325,.227,.227],color='#526782',lw=1.8)
+    arrow(ax,(.915,.227),(.915,.196))
+    arrow(ax,(.01,.1325),(.017,.1325))
+    ax.text(.44,.235,'Input shortcut / 输入残差连接',fontsize=11,ha='center',color='#526782')
+    ax.text(.01,.018,'Validation selects the best EMA checkpoint. Test-time horizontal-flip TTA reuses that classifier.',fontsize=11,color='#526782')
     save(fig,'architecture')
 
 
