@@ -1,0 +1,13 @@
+__pycache__/
+*.py[cod]
+.venv/
+.env
+data/raw/
+data/working/
+data/weights/
+experiments/
+*.pth
+*.safetensors
+features.npy
+*.zip
+.pytest_cache/

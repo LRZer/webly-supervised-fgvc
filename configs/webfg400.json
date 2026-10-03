@@ -1,0 +1,17 @@
+{
+  "model": "convnext_base.fb_in1k",
+  "img_size": 320,
+  "batch_size": 64,
+  "workers": 12,
+  "lr": 0.0005,
+  "weight_decay": 0.05,
+  "drop_path_rate": 0.4,
+  "warmup_epochs": 3,
+  "ema_decay": 0.9999,
+  "seed": 2025,
+  "task": "webfg400",
+  "expected_classes": 400,
+  "epochs": 100,
+  "mixup_alpha": 0.2,
+  "cutmix_alpha": 0.2
+}

@@ -1,0 +1,20 @@
+[
+  {
+    "file": "pred_results_web400.csv",
+    "rows": 5687,
+    "classes": 400,
+    "predicted_classes": 397,
+    "zero_predicted_classes": 3,
+    "duplicate_filenames": 0,
+    "format_valid": true
+  },
+  {
+    "file": "pred_results_web5000.csv",
+    "rows": 60000,
+    "classes": 5000,
+    "predicted_classes": 4925,
+    "zero_predicted_classes": 75,
+    "duplicate_filenames": 0,
+    "format_valid": true
+  }
+]

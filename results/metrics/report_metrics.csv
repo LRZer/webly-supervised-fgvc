@@ -1,0 +1,4 @@
+method,webfg400_accuracy_percent,webinat5000_accuracy_percent,arithmetic_mean_percent,source,status
+ResNet-50,65.8,58.2,62.0,final report PDF pp.6-7,historical_report_not_rerun
+EfficientNet-B4,67.1,59.6,63.3,final report PDF pp.6-7,historical_report_not_rerun
+ConvNeXt-Base pipeline,69.3,60.9,65.1,final report PDF pp.6-7,historical_report_not_rerun

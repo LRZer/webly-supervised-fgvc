@@ -1,0 +1,51 @@
+{
+  "date": "2026-10-04",
+  "timezone": "Asia/Shanghai",
+  "environment": {
+    "os": "Windows",
+    "python": "3.11.7",
+    "torch": "2.5.1+cpu",
+    "torchvision": "0.20.1+cpu",
+    "timm": "1.0.12"
+  },
+  "workflow_tests": {
+    "passed": 6,
+    "failed": 0,
+    "covers": [
+      "prediction validation and duplicates",
+      "dry-run preservation and backup bytes",
+      "classwise filtering quotas and small classes",
+      "deterministic split and membership",
+      "outside-root review rejection",
+      "original artifact hashes"
+    ]
+  },
+  "model_smoke": {
+    "passed": true,
+    "inputs": "synthetic 64x64 images, two classes",
+    "weights": "random initialization for execution testing only",
+    "checks": [
+      "one optimization batch with Mixup and EMA",
+      "best/last/raw weight and config/log outputs",
+      "strict checkpoint load and TTA inference",
+      "matching test filename coverage",
+      "incomplete CSV rejected",
+      "local checkpoint feature extraction",
+      "2x1024 features aligned to index and L2 normalized"
+    ]
+  },
+  "preserved_predictions": {
+    "webfg400_rows": 5687,
+    "webinat5000_rows": 60000,
+    "duplicate_filenames": 0,
+    "all_labels_in_range": true
+  },
+  "docker": {
+    "recipe_added": true,
+    "built": false,
+    "reason": "Docker Desktop Linux engine was not running; daemon named pipe unavailable"
+  },
+  "historical_competition_training_rerun": false,
+  "historical_accuracy_recomputed": false,
+  "historical_metrics_source": "final-report.zh-CN.pdf pp.6-7"
+}

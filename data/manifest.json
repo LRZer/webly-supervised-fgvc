@@ -1,0 +1,12 @@
+{
+  "datasets": [
+    {"name":"WebFG-400","classes":400,"specified_training_images":43087,"specified_full_test_images":13882,"raw_images_available":false,"preserved_prediction_rows":5687,"prediction_test_stage":"unknown"},
+    {"name":"WebiNat-5000","classes":5000,"specified_training_images":580865,"specified_full_test_images":100000,"raw_images_available":false,"preserved_prediction_rows":60000,"prediction_test_stage":"unknown"}
+  ],
+  "ground_truth_available":false,
+  "task_weights_available":false,
+  "original_class_mapping_available":false,
+  "historical_training_logs_available":false,
+  "source":"Competition specification p.2 and recovered source archive",
+  "access":"Organizer participant download interface or original backups; direct archive URLs were not recovered."
+}

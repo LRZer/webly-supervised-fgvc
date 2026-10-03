@@ -1,0 +1,74 @@
+[
+  {
+    "path": "archive/original/1_clean_minimal.py",
+    "bytes": 6548,
+    "sha256": "08d47bca488cdd0e692efd8340c143129f641ca086143f9d40b1b877e6b2d3a5",
+    "source": "recovered source archive"
+  },
+  {
+    "path": "archive/original/2_extract_features.py",
+    "bytes": 7336,
+    "sha256": "2e011f8bbe1783232c487c08890e8a31bfa4e6c03f48ac1ce712c9af07cf5f69",
+    "source": "recovered source archive"
+  },
+  {
+    "path": "archive/original/3_1_score_delete.py",
+    "bytes": 7526,
+    "sha256": "469ce443081ac11005c8a2f3acd4db350883ae32f09323ef432b75f2c03a5911",
+    "source": "recovered source archive"
+  },
+  {
+    "path": "archive/original/3_2_stage_removed.py",
+    "bytes": 6109,
+    "sha256": "74c8827a26c9706198a25cba220118ecc797dc22967da85062d3c9f18afdd09e",
+    "source": "recovered source archive"
+  },
+  {
+    "path": "archive/original/4_split_to_train_val.py",
+    "bytes": 5306,
+    "sha256": "80b59bbb6bbec9ea70513c1287df70d21e7987e73baa07c200da56f63eca66fa",
+    "source": "recovered source archive"
+  },
+  {
+    "path": "archive/original/4_train_convnext_400.py",
+    "bytes": 9234,
+    "sha256": "33ae9b5d36a6946406648a2050f4254a1c861a866e6e96d3fd0459ad54268bab",
+    "source": "recovered source archive"
+  },
+  {
+    "path": "archive/original/4_train_convnext_5000.py",
+    "bytes": 9235,
+    "sha256": "8542d1530d731d51f6d0197b334b87389d55693afa2cc70883fb3bbc1c9da0a5",
+    "source": "recovered source archive"
+  },
+  {
+    "path": "archive/original/5_infer.py",
+    "bytes": 6769,
+    "sha256": "6cd80e5a7e12c728dd71ce594e533e76928828701c8e0ff22cd2c522622dc4bf",
+    "source": "recovered source archive"
+  },
+  {
+    "path": "results/predictions/pred_results_web400.csv",
+    "bytes": 244539,
+    "sha256": "03093727ca104bda5cb0a55d19e3b2e780ef7ecd1a4e35831de115da37f69b39",
+    "source": "recovered source archive"
+  },
+  {
+    "path": "results/predictions/pred_results_web5000.csv",
+    "bytes": 2579998,
+    "sha256": "dc74ba19b0adf23f602ca65eb8fc5d7620d92facbdc453cc25212fe494496e28",
+    "source": "recovered source archive"
+  },
+  {
+    "path": "reports/competition-task.zh-CN.pdf",
+    "bytes": 757826,
+    "sha256": "981c954e3c2f22ef9a13dd7d4231044220d92e563e39872d4de084aa0abe807f",
+    "source": "synced competition specification"
+  },
+  {
+    "path": "reports/final-report.zh-CN.pdf",
+    "bytes": 519186,
+    "sha256": "fc0a0a41a3939aed966a203992477415b994a25f9c5dbc627f796d8913c526fa",
+    "source": "recovered course report; student IDs redacted"
+  }
+]

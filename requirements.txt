@@ -1,0 +1,9 @@
+# Portable maintenance environment, not a recovered historical lockfile.
+torch==2.5.1
+torchvision==0.20.1
+timm==1.0.12
+numpy==1.26.4
+pandas==2.2.3
+Pillow==11.0.0
+safetensors==0.4.5
+tqdm==4.67.1
